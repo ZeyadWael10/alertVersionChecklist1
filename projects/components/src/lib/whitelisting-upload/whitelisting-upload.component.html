@@ -1,0 +1,38 @@
+<p>whitelisting-upload works! zizo</p>
+
+<input type="file" multiple [disabled]="viewMode" accept=".xlsx,.xls,.csv" class="ai-file-upload-button" #fileInput />
+
+<button [disabled]="viewMode" (click)="confirmUpload(fileInput.files)">Upload</button>
+
+<!-- Confirmation Popup -->
+<div class="modal-backdrop" *ngIf="showConfirm">
+  <div class="modal">
+    <p>Confirm file upload and enter details</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Uploaded File</th>
+          <th>Name</th>
+          <th>Description (optional)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let file of fileDetails; let i = index">
+          <td>{{ file.original.name }}</td>
+          <td>
+            <input type="text" [(ngModel)]="file.name" placeholder="Enter name" />
+          </td>
+          <td>
+            <textarea type="text" [(ngModel)]="file.description" placeholder="Description" ></textarea>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="modal-buttons">
+      <button (click)="uploadFiles()">OK</button>
+      <button (click)="cancelUpload()">Cancel</button>
+    </div>
+  </div>
+</div>

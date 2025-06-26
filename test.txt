@@ -1,0 +1,755 @@
+wf status reference list, approve date at the end of the workflow.
+
+Alert ID alert_id
+Actionable Entity ID actionable_entity_id
+Actionable Entity Name actionable_entity_nm
+Actionable Entity Type actionable_entity_type_nm
+Alert Status alert_status
+Selected Checklist code selected_checklist_code
+Selected Checklist Label selected_checklist_label
+
+
+
+https://sasserver.demo.sas.com/svi-alert/alertingEvents?filter=and(eq(alertId,%22b63203ba-d218-410d-b3fe-95108afb5208%22),eq(alertVersionNumber,1))&limit=9999&sortBy=creationTimeStamp:descending
+
+alert id:- b63203ba-d218-410d-b3fe-95108afb5208
+
+
+
+
+let ewsScoreTable = {
+    name: "ewsScoreTable", // Unique control name. Must match value for the control_nm column in dh_control.
+    category: "Custom", // Category from the dh_control_category table (control_category_id 4).
+    directiveName: "ews-score-table", // This name is also referenced when defining the custom element at the end of the code.
+    displayName: {
+        defaultText: "EWS Score Table"  // The name of the solution extension that appears with the other controls in VI pagebuilder.
+    },
+    controlDescription: {
+        defaultText: ""  // This description is deprecated, so it can be left blank.
+    },
+    controlAttributes: {
+        attributes: {
+
+        },
+        metadata: {
+            renderAs: "webcomponent",  // It is crucial to define the solution extension as a webcomponent.
+            states: {
+                readOnly: true,
+                required: true,
+                hidden: true
+            }
+        }
+    }
+};
+
+// REGISTER THE CONFIG WITH VI
+window.sas.vi.config.registerSolutionExtension(ewsScoreTable);
+
+let ewsScoreTableTemplate = document.createElement("template");
+ewsScoreTableTemplate.innerHTML = `
+    <!DOCTYPE html>
+<html>
+<head>
+<style>
+#gridTable,
+#inputTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+#gridTable th {
+    text-decoration: none;
+    white-space: nowrap;
+    font-weight: 700;
+    color: white;
+    background: #0379CE;	
+    border:1px solid white;
+}
+
+#gridTable td
+{
+    border:1px solid #c9c7c7;
+    padding:5px;
+}
+#gridTable th,
+#inputTable th {
+padding:7px;
+}
+ #gridTable th:first-child,
+     #inputTable th:first-child
+{
+border-top-left-radius:5px;
+
+}
+ #gridTable th:last-child,
+#inputTable th:last-child	{
+border-top-right-radius:5px;
+}
+#inputTable td input,
+#inputTable td select,
+    .form-group input,
+    .form-group select{
+    border-radius: 5px;
+    padding: 5px;
+    border: 1px solid #d0d5dd;
+    background: #f9f9f9;
+}
+#inputTable td input,
+#inputTable td select,
+#gridTable td input,
+#gridTable td select,
+#inputTable td textarea, 
+#gridTable td textarea {
+    width: 90%;
+    margin: auto;
+    display: block;
+    border-radius: 5px;
+    padding: 5px;
+    border: 1px solid #d0d5dd;
+    background: #f9f9f9;
+}
+
+h3{
+    color:#0379CE;
+} 
+.table-collapse,
+table{
+    border-collapse:collapse
+}
+.error-msg {
+    color:#d92d20;
+    display:none;
+}
+[tip] .tooltip {
+    position: fixed;
+    font-size: 16px;
+    line-height: 20px;
+    padding: 5px;
+    background: #444;
+    border: 1px solid #222;
+    visibility: hidden;
+    opacity: 0;
+    box-shadow: -2px 2px 5px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s, visibility 0s;
+    color: white;
+    min-width: 120px;
+    }
+
+[tip]:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    }
+    
+    #previous,
+    #next,
+    #first,
+    #last,
+    #pageRecords
+    {
+        background: white;
+        padding: 4px 8px;
+        border-radius: 3px;
+        border: 1px solid #0379CE;
+        color: #0379CE;
+        margin-right: 5px;
+    }
+    
+    #newChild,
+    #saveChild,
+    #deleteChild{
+        all: unset;
+        padding: 4px 20px;
+        border: 1px solid;
+        border-radius: 4px;
+        cursor:pointer;
+    }
+    #saveChild{
+        background:#0379CE;
+        color:white;
+        border:none;
+    }
+    #deleteChild{
+        background:#d92d20;
+        color:white;
+        border:none;
+    }
+    #collapsible {
+        background-color: white;
+        color: #262626;
+      cursor: pointer;
+      padding: 14px 0;
+      border: none;
+      text-align: left;
+      outline: none;
+      font-size: 18px;
+      display:flex;
+      justify-content:space-between;
+      font-weight:600;
+    }
+    #collapsible:after {
+      color: black;
+      font-weight: bold;
+      float: right;
+      margin-left: 5px;
+    }
+    #content {
+        max-height: 200px;
+        overflow-y: auto;
+        transition: max-height 0.2s ease-out;
+        margin-bottom: 20px;
+    }
+    td img{
+        margin-inline-end: 7px;
+    }
+    .arrow{
+        all:unset;
+        font-size:0.8rem;
+        font-weight:bold;
+        color:#004e42;
+        transition:all 0.3s linearl
+        margin-right:5px;
+    }
+    .rotate{
+        transform:rotate(180deg);
+    }
+    #searchDiv{
+    width:70%;
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:20px
+    }
+    .form-group{
+    width:100%
+    }
+    .form-group input,
+    .form-group select{
+        width:75%
+    }
+    .form-group label{
+        display:block;
+        margin-bottom:4px;
+    }
+    #editBtn,
+    #saveBtn,.close{
+			all: unset;
+            text-align: center;
+            padding: 7px 20px;
+            margin-inline-start: 15px;
+            border: 1px solid #0379CE;
+            border-radius: 5px;
+            background: #0379CE;
+            color: white;
+            cursor: pointer;
+            position: relative;
+            transition: all 300ms linear;
+    }
+    .cancelBtn ,
+    #submitBtn {
+        all: unset;
+        text-align: center;
+        padding: 7px 20px;
+        border: 1px solid #0379CE;
+        border-radius: 5px;
+        background: white;
+        color: #0379CE;
+        cursor: pointer;
+        position: relative;
+        transition: all 300ms linear;
+    }
+    #editBtn:hover,
+    #saveBtn:hover{
+        background: white;
+        color: #0379CE;
+    }
+    .cancelBtn:hover,
+    #submitBtn:hover{
+        background: #0379CE;
+        color: white;
+    }
+    fieldset{
+      border-color: #262626 !important;
+      border-radius:5px;
+      margin-bottom: 30px;
+    }
+    legend {
+        color: #262626;
+        font-size: 16px;
+        display: inline-block;
+        font-weight: 600;
+    }
+    /* The Modal (background) */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2;
+        /* padding: 15% 0px; */
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: hsla(0,0%,100%,0.6);
+    }
+
+    /* Modal Content */
+    .modal-content {
+        position: absolute;
+        overflow: auto;
+        background-color: #fefefe;
+        margin: auto;
+        padding: 25px;
+        border: 1px solid #888;
+        border-radius: 10px;
+        width: 40%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    /* The Close Button */
+    .close {
+        background-color: hsla(217,13%,73%,0.1) !important;
+        color: #2a3037 !important;
+        float: right;
+        margin-top: 0px;
+        font-size: 16px;
+        padding: 5px 15px;
+        border : 1px solid #b1b8c3;
+    }
+    #row{
+        display: block;
+    }
+    .buttons, .editForm{
+        display: flex;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+    .editForm{
+        align-items: flex-end;
+    }
+    tr:nth-child(odd){
+	   background:#e6efff;
+    }
+    tr:nth-child(even){
+        background:#ffff;
+    }
+    input[type="text" i],
+    input[type="date" i],
+    input[type="number" i],
+    select,
+    textarea {
+        background: #d9d9d9 !important;
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+    }
+    .form-group{
+    width:100%
+    }
+    .form-group input,
+    .form-group select{
+        width:75%
+    }
+    .form-group label{
+        display:block;
+        margin-bottom:4px;
+    }
+    .container{
+        width: 98%;
+        margin: auto;
+    }
+</style>
+</head>
+<body>
+    <div class='container'>
+        <div id='form'>
+            <div class="form-group">
+                <label tip="" for="question">Question</label>
+                <p id="question"></p>
+            </div>
+            <div class="editForm">
+                <div class="form-group">
+                    <label tip="" for="answer">Answer</label>
+                    <input type="text" id="answer"/>
+                </div>
+                <div class="form-group">
+                    <label tip="" for="score">Score</label>
+                    <input type="text" id="score"/>
+                </div>
+                <div class="form-group">
+                    <label tip="" for="operator">Operator</label>
+                    <input type="text" id="operator"/>
+                </div>
+                <div class="form-group">
+                    <label tip="" for="companySize">Company Size</label>
+                    <input type="text" id="companySize"/>
+                    </div>            
+                    <input type="button" id="saveBtn" value="Save"></input>
+                    <input type="button" style='margin-inline-start: 15px;' class='cancelBtn' id="closeBtn" value="cancel" />
+            </div>
+        </div>
+        <table id="gridTable">
+            <thead>
+                <tr id="headerRow">
+                    
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+        <div style='display:flex;justify-content:center;margin-top:10px;padding-bottom:10px;align-items:center;'>
+        <input type="button" id="first" value="<<" />
+        <input type="button" id="previous" value="<"/>
+        <label id="pageIndex" style='padding-right:5px;color: #0379CE;' >1 of 1</label> 
+        <input type="button" id="next" value=">" />
+        <input type="button" id="last" value=">>"/>
+        <label id='records' style='padding-right:5px;color: #0379CE;' >Records</label>
+        <select id="pageRecords">
+            <option value="20" selected>20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+        </select>
+        </div>
+        <!-- The Modal -->
+        <div id="myModal" class="modal">
+            <!-- Modal content -->
+            <div class="modal-content">
+                <h3 style="text-align:center;" id="header">Message</h3>
+                    <div id="content">
+                        <div id="row">
+
+                        </div>
+                    </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+`;
+
+
+class ewsScoreTableControl extends HTMLElement {
+
+    shadow = this.attachShadow({ mode: "open" });
+
+    get required() { return !!this.controlApi?.control.state.required; }
+
+    get disabled() { return !this.controlApi?.control.state.allowInput; }
+
+    get readOnly() { return !!this.controlApi?.control.state.readOnly; }
+
+    get mode() { return this.controlApi?.page.getMode(); }
+
+    onRequiredChange() {
+        if (this.requiredIndicator) {
+            this.requiredIndicator.innerHTML = this.required ? "*" : "";
+        }
+    }
+
+    onReadOnlyChange() {
+        if (this.readOnly) {
+            this.classList.add("read-only");
+        } else {
+            this.classList.remove("read-only");
+        }
+        this.handleDisabled();
+    }
+
+    constructor() {
+        super();
+        this.shadow.appendChild(ewsScoreTableTemplate.content.cloneNode(true));
+    }
+
+    async connectedCallback() {
+        let s = this;
+        let ctrl = this.controlApi?.control;
+
+        let tableBody = this.shadow.getElementById("tableBody");
+        let form = this.shadow.getElementById("form");
+        let headerRow = this.shadow.getElementById("headerRow");
+        let question = this.shadow.getElementById("question");
+        let answer = this.shadow.getElementById("answer");
+        let score = this.shadow.getElementById("score");
+        let operator = this.shadow.getElementById("operator");
+        let companySize = this.shadow.getElementById("companySize");
+        let editBtn = this.shadow.getElementById("editBtn");
+        let cancelBtn = this.shadow.getElementById("cancelBtn");
+        let closeBtn = this.shadow.getElementById("closeBtn");
+        let saveBtn = this.shadow.getElementById("saveBtn");
+        let submitBtn = this.shadow.getElementById("submitBtn");
+        let modal = s.shadow.getElementById("myModal");
+        let popupRow = s.shadow.getElementById("row");
+        var pageData = new Array();
+        var currentPage = 1;
+        var numberPerPage = 20;
+        var numberOfPages = 1;
+        var first = this.shadow.getElementById("first");
+        var last = this.shadow.getElementById("last");
+        var previous = this.shadow.getElementById("previous");
+        var next = this.shadow.getElementById("next");
+        var pageIndex = this.shadow.getElementById("pageIndex");
+        var pageRecords = this.shadow.getElementById("pageRecords");
+        let tableDetails = {};
+
+        async function loadList () {
+            await getScoresData()
+            numberOfPages = Math.ceil(tableDetails.length / numberPerPage);
+            var begin = ((currentPage - 1) * numberPerPage);
+            var end = begin + numberPerPage;
+            pageIndex.innerHTML = currentPage + " of " + numberOfPages;
+            pageData = tableDetails.slice(begin, end);
+            displayTable(pageData)
+            checkNextPrevBtns();
+        }
+        
+        function checkNextPrevBtns() {
+            next.disabled = currentPage == numberOfPages ? true : false;
+            previous.disabled = currentPage == 1 ? true : false;
+            first.disabled = currentPage == 1 ? true : false;
+            last.disabled = currentPage == numberOfPages ? true : false;
+        }
+        
+        pageRecords.addEventListener('change',function() {
+            numberPerPage = pageRecords.value;
+            numberOfPages = Math.ceil(tableDetails.length / numberPerPage);
+            currentPage = 1
+            loadList();
+        });
+        
+        next.addEventListener('click',function() {
+            currentPage += 1;
+            loadList();
+        });
+    
+        previous.addEventListener('click',function() {
+            currentPage -= 1;
+            loadList();
+        });
+    
+        first.addEventListener('click',function() {
+            currentPage = 1;
+            loadList();
+        });
+    
+        last.addEventListener('click',function() {
+            currentPage = numberOfPages;
+            loadList();
+        });
+        
+
+        saveBtn.addEventListener('click', function () {
+			updateForm();
+		});
+
+        closeBtn.addEventListener('click',function () {
+			clearForm();
+		});
+
+        function editFormVisible(toggle) {
+            form.style.display = toggle;
+        }
+        async function onPageLoad() {
+            console.log(s.mode);
+            loadList();
+            editFormVisible('none')
+        }
+        window.onload = onPageLoad()
+
+        console.log("EWS Table ctrl:");
+        console.log(ctrl);
+
+        function onModeChange() {
+            if (s.mode === "view") {
+                console.log("Table view mode");
+                cancelEdit()
+            }
+            else {
+                console.log("Table edit mode");
+                openEdit()
+            }
+        }
+
+        this.controlApi?.page.onChange?.(({ type }) => {
+            if (type === "mode") {
+                onModeChange();
+            }
+        });
+
+
+        function appendHeaders() {
+            headerRow.innerHTML = ""
+            let headers = [
+                {id:"id",label:"#"},
+                {id:"field_name",label:"Question"},
+                {id:"field_value",label:"Answer"},
+                {id:"score",label:"Score"},
+                {id:"operator",label:"Operator"},
+                {id:"company_size",label:"Company Size"},
+                {id:"actions",label:"Actions"},
+            ]
+            headers.forEach((header)=>{
+                let th = document.createElement("th");
+                th.setAttribute("id",header.id)
+                th.innerHTML = header.label;
+                headerRow.appendChild(th);
+            })
+        }
+        
+        function clearForm() {
+            question.innerHTML = '';
+            answer.value = '';
+            score.value = '';
+            operator.value = '';
+            companySize.value = '';
+            editFormVisible('none')
+        }
+
+        function fillForm(idTd,questionTd,answerTd,scoreTd,operatorTd,companySizeTd) {
+            editFormVisible('block')
+            form.setAttribute('id',idTd)
+            question.innerHTML = questionTd
+            answer.value = answerTd
+            score.value = scoreTd
+            operator.value = operatorTd == undefined ? "" : operatorTd
+            companySize.value = companySizeTd== undefined ? "" : companySizeTd
+        }
+
+        async function updateForm() {
+            await window.sas.vi.http.get("/svi-datahub/documents/ews_score_table/" + form.getAttribute("id"),null).then(async function (getResult){
+                if(getResult.status == 200){
+                    console.log("Document Got Successfully",getResult);
+                    getResult.body.fieldValues.field_value = answer.value;
+                    getResult.body.fieldValues.score = parseFloat(score.value);
+                    getResult.body.fieldValues.operator = operator.value == undefined ? "" : operator.value;
+                    getResult.body.fieldValues.company_size = companySize.value == undefined ? "" : companySize.value;
+                    await window.sas.vi.http.post("/svi-datahub/locks/documents?type=ews_score_table&id=" + form.getAttribute("id"),null).then(async function (lockResult) {
+                        if(lockResult.status == 201){
+                            console.log("Document Locked Successfully");
+                            await window.sas.vi.http.put("/svi-datahub/documents/ews_score_table/" + form.getAttribute("id"),getResult.body).then(async function (result) {
+                                if(result.status == 200){
+                                    await window.sas.vi.http.delete("/svi-datahub/locks/documents?type=ews_score_table&id=" + form.getAttribute("id"),null).then(async function (unlockResult) {
+                                        console.log("Question Updated Successfully...");
+                                        showPopup("Question Updated Successfully!");
+                                        setTimeout(()=>{
+                                            modal.style.display = "none";
+                                            getScoresData();
+                                        },2500)
+                                        
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            
+        }
+
+        async function getScoresData() {
+            let start = 0;
+            let limit = 1000;
+            let fetching = true;
+            while(fetching) {
+                await window.sas.vi.http.get("/svi-datahub/documents/ews_score_table?start="+start+"&limit="+limit+"").then(function (response) {
+                    tableDetails = response.body
+                    console.log("EWS Scores Table Details", tableDetails);
+                    if(response.body.length < limit){
+                        fetching = false;
+                    }
+                    else{
+                        start += limit;
+                    }
+                });
+            }
+        }
+        
+        function displayTable(data) {
+            appendHeaders();
+            tableBody.innerHTML = '';
+            for (let i = 0; i < data.length; i++) {
+                let row = document.createElement('tr');
+                // id column
+                let td1 = document.createElement('td');
+                td1.innerHTML = i+1;
+                row.appendChild(td1)
+                // Question Column
+                let td2 = document.createElement('td');
+                td2.innerHTML = data[i].fieldValues.field_label
+                row.appendChild(td2)
+                // Answers Column
+                let td3 = document.createElement('td');
+                td3.innerHTML = data[i].fieldValues.field_value
+                row.appendChild(td3)
+                // Scores Column
+                let td4 = document.createElement('td');
+                td4.innerHTML = data[i].fieldValues.score
+                row.appendChild(td4)
+                // Operator Column
+                let td5 = document.createElement('td');
+                td5.innerHTML = data[i].fieldValues.operator == undefined ? "" : data[i].fieldValues.operator
+                row.appendChild(td5)
+                // Company Size Column
+                let td6 = document.createElement('td');
+                td6.innerHTML = data[i].fieldValues.company_size == undefined ? "" : data[i].fieldValues.company_size
+                row.appendChild(td6)
+                // Action Column
+                let td7 = document.createElement('td');
+                let editBtn = document.createElement("button");
+                editBtn.setAttribute("id","submitBtn");
+                editBtn.innerHTML = "Edit";
+                editBtn.style.cursor = "pointer";
+                editBtn.addEventListener('click', function () {
+                    fillForm(data[i].id,data[i].fieldValues.field_label,data[i].fieldValues.field_value,data[i].fieldValues.score,data[i].fieldValues.operator,data[i].fieldValues.company_size);
+                });
+                td7.appendChild(editBtn);
+                row.appendChild(td7)
+                // Append Table Body
+                tableBody.appendChild(row)
+            }
+        }
+        
+        function setSelectOptionsByType(ddl, item) {
+            if (item.field_type == "DDL") {
+                addOption(ddl, "", "");
+                for (let i = 0; i < item.reference_list_items.length; i++) {
+                    addOption(ddl, item.reference_list_items[i].label, item.reference_list_items[i].code);
+                }
+            }
+            else if (item.field_type == "FLAG") {
+                addOption(ddl, "Yes", "true");
+                addOption(ddl, "No", "false");
+            }
+        }
+
+        function getInputType(field_type) {
+            if (field_type == "STR") {
+                return "text";
+            }
+            if (field_type == "NUM") {
+                return "number";
+            }
+        }
+
+        function addOption(ddl, t, v) {
+            let opt = document.createElement("option");
+            opt.text = t;
+            opt.value = v;
+            ddl.add(opt);
+        }
+
+        function showPopup(msg) {
+            modal.style.display = "block";
+            popupRow.innerHTML = '';
+            let p = document.createElement("p");
+            p.style.fontSize = "16px";
+            p.style.textAlign = "center";
+            p.innerHTML = msg;
+            popupRow.appendChild(p);
+        }
+
+       
+    }
+}
+
+customElements.define("ews-score-table", ewsScoreTableControl);

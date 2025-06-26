@@ -1,0 +1,38 @@
+<div class="control">
+  <div class="container">
+    <div class="alertBox">
+      <!-- Alert Versions Dropdown -->
+      <label for="alertVersions">Alert Versions: </label>
+      <select id="alertVersions"
+              [(ngModel)]="selectedAlertlistItem"
+              (change)="onAlertListItemChange()"
+              [disabled]="isViewMode">
+        <option value=""></option>
+        <option *ngFor="let version of alertVersionsArr" [value]="version.alertingEventId">
+          {{ version.creationTimeStamp | date: 'medium' }}
+        </option>
+      </select>
+    </div>
+  
+    <div class="checklistBox">
+      <!-- Checklist Dropdown -->
+      <label for="checklistItems">Checklist: </label>
+      <!-- Disabled dropdown when not editing -->
+      <select id="checklistItems"
+              [disabled]="isViewMode"
+              [(ngModel)]="selectedChecklistItem"
+              (change)="onListItemChange()"
+              data-internal="internalEntityID">
+        <option *ngFor="let item of checklistArr" [value]="item.code">{{ item.label }}</option>
+      </select>
+    </div>
+  
+    <!-- Single Toggle Button for Edit/Save -->
+    <div class="buttons">
+      <button (click)="toggleEditSave()" [disabled]="isViewMode">
+        {{ isEditing ? 'Save' : 'Edit' }}
+      </button>
+    </div>
+  
+  </div>
+</div>
