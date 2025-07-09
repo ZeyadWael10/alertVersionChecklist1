@@ -21,6 +21,7 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
 
   sviWindow = window as SviWindow;
   alertId: string = "";
+  actionableEntityId: string = "";
   pageMode: string | undefined;
   previousMode: string | undefined;
   modeWatcherInterval: any;
@@ -93,7 +94,9 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
     const result = await this.sviWindow.sas.vi.http.get(`/svi-alert/alerts/${this.alertId}`);
     const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
     this.alertDetailsArr = parsed;
+    this.actionableEntityId = this.alertDetailsArr.actionableEntityId;
     console.log("Alert Details",result);
+    console.log("ActionableEntityId",this.actionableEntityId );
   }
 
   async getAlertVersions() {
