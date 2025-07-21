@@ -17,13 +17,13 @@ button {
   border: 1px solid #ccc;
   border-radius: 6px;
   padding: 0.5rem;
-  background-color: #fff;
+  background-color: #fff !important;
   cursor: pointer;
 }
 
 /* Upload button */
 button {
-  background-color: #007bff;
+  background-color: #007bff !important;
   color: white;
   border: none;
   border-radius: 6px;
@@ -32,12 +32,12 @@ button {
 }
 
 button:disabled {
-  background-color: #ccc;
+  background-color: #ccc !important;
   cursor: not-allowed;
 }
 
 button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: #0056b3 !important;
 }
 
 /* Modal backdrop */
@@ -49,11 +49,12 @@ button:hover:not(:disabled) {
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  opacity: 1 !important;
 }
 
 /* Modal container */
 .modal {
-  background-color: #fff;
+  background-color: #fff !important;
   width: 80%;
   max-width: 700px;
   margin: 5rem auto;
@@ -98,4 +99,9 @@ textarea {
 
 .modal-buttons button {
   margin-left: 0.5rem;
+}
+
+button{
+    border-radius: 4px;
+    color: white !important;
 }
