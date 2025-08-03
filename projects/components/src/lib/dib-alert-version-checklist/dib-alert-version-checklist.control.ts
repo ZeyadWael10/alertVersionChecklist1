@@ -23,6 +23,12 @@ export const control = {
           defaultText:'Internal Entity Object Type Name'
         },
         type:"TextInput"
+      },
+      alertVersionJobPath:{
+        displayName:{
+          defaultText:'Alert Version Job Path'
+        },
+        type:"TextInput"
       }
     },
     metadata: {

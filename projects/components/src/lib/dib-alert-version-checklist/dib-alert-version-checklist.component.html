@@ -8,8 +8,8 @@
               (change)="onAlertListItemChange()"
               [disabled]="isViewMode">
         <option value=""></option>
-        <option *ngFor="let version of alertVersionsArr" [value]="version.alertingEventId">
-          {{ version.creationTimeStamp | date: 'medium' }}
+        <option *ngFor="let version of alertVersionsArr" [value]="version.alert_version_nbr_val">
+          {{ version.alert_version_nbr_dttm | date: 'medium' }}
         </option>
       </select>
     </div>

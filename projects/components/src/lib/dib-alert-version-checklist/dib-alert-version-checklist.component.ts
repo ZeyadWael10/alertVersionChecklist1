@@ -35,10 +35,12 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
   selectedChecklistItem: any;
 
   isEditing: boolean = false;
+  isViewMode: boolean = false;
   hasExistingRecord: boolean = false;
 
   internalEntityStoredObjectId: any;
   internalEntityObjectTypeName: any;
+  alertVersionJobPath: any;
 
   reqBody = { filter: '', start: 0, limit: 1, depth: 1 };
   options: any = {
@@ -71,38 +73,62 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
     this.previousMode = this.pageMode;
     this.internalEntityStoredObjectId = this.childNode.typeAttributes['internalEntityStoredObjectID'];
     this.internalEntityObjectTypeName = this.childNode.typeAttributes['internalEntityObjectTypeName'];
+    this.alertVersionJobPath = this.childNode.typeAttributes['alertVersionJobPath'];
+
+    console.log("Entity Type", this.pageModel.type);
+    console.log("Mode Type", this.pageModel?.mode);
 
     await this.getAlertDetails();
-    await this.getAlertVersions();
+    await this.getAlertVersionDetails();
     await this.getChecklistItems();
 
     if (this.alertVersionsArr.length) {
       this.selectedAlertlistItem = this.alertVersionsArr[0].alertingEventId;
       await this.onAlertListItemChange();
     }
-    console.log("Entity Type",this.pageModel.type);
-    if (this.pageModel.type === 'alerts') {
-      this.pageModel?.mode === 'edit'; 
-    }
-    if (this.pageModel.type === 'alerts') console.log("Mode",this.pageModel.mode);
+
     this.startModeWatcher();
-    console.log("Page Model",this.pageModel);
-    
+    console.log("Page Model", this.pageModel);
   }
 
   async getAlertDetails() {
     const result = await this.sviWindow.sas.vi.http.get(`/svi-alert/alerts/${this.alertId}`);
     const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
     this.alertDetailsArr = parsed;
-    this.actionableEntityId = this.alertDetailsArr.actionableEntityId;
-    console.log("Alert Details",result);
-    console.log("ActionableEntityId",this.actionableEntityId );
+    this.actionableEntityId = parsed.actionableEntityId;
+    console.log("Alert Details", result);
+    console.log("ActionableEntityId", this.actionableEntityId);
   }
 
-  async getAlertVersions() {
-    const result = await this.sviWindow.sas.vi.http.get(`/svi-alert/alertingEvents?filter=and(eq(alertId,%22${this.alertId}%22),eq(alertVersionNumber,1))&limit=9999&sortBy=creationTimeStamp:descending`);
-    const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
-    this.alertVersionsArr = parsed?.items || [];
+  async getAlertVersionDetails() {
+    // const result = await this.sviWindow.sas.vi.http.get(`/SASJobExecution/?_program=${this.alertVersionJobPath}x&_action=execute&id=${this.actionableEntityId}`);
+    // const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+    // console.log("Api Result", parsed.seachresult);
+    // this.alertVersionsArr = parsed.seachresult;
+    // const formattedData = this.alertVersionsArr.map(item => ({
+    //   ...item,
+    //   alert_version_nbr_dttm: this.formatDate(item.alert_version_nbr_dttm)
+    // }));
+    // this.alertVersionsArr = formattedData;
+  }
+
+  formatDate(dateString: string): string {
+    const date = new Date(dateString.replace(
+      /(\d{2})([A-Za-z]{3})(\d{4}):(\d{2}):(\d{2}):(\d{2})\.(\d{6})/,
+      '$2 $1, $3 $4:$5:$6'
+    ));
+
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+      hour12: true
+    };
+
+    return new Intl.DateTimeFormat('en-US', options).format(date);
   }
 
   async getChecklistItems() {
@@ -118,13 +144,13 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
     this.reqBody.filter = `and(eq(alert_id,"${this.alertId}"),eq(curr_alerting_event_id,"${eventId}"))`;
 
     const result = await this.sviWindow.sas.vi.http.post(`/svi-datahub/documents/${this.internalEntityObjectTypeName}`, this.reqBody, this.options);
-    console.log("result",result);
-    
+    console.log("result", result);
+
     const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
     let record;
     parsed?.items?.length > 0 ? record = parsed?.items?.[0] : undefined;
-    console.log("Internal Entity Record",record);
-    
+    console.log("Internal Entity Record", record);
+
     if (record != undefined) {
       const checklistCode = record.fieldValues?.selected_checklist_code;
       this.selectedChecklistItem = checklistCode;
@@ -146,7 +172,6 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
     if (!selectedItem) return;
     this.apiObject.fieldValues.selected_checklist_code = selectedItem.code;
     this.apiObject.fieldValues.selected_checklist_label = selectedItem.label;
-    
   }
 
   updateApiObject(alertingEventId: string): void {
@@ -172,10 +197,10 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
 
   toggleEditSave(): void {
     if (this.isEditing) {
-      console.log("isEditing",this.isEditing);
+      console.log("isEditing", this.isEditing);
       this.onListItemChange();
       this.updateApiObject(this.selectedAlertlistItem);
-      console.log("Api Object",this.apiObject);
+      console.log("Api Object", this.apiObject);
       this.saveAlertVersionChecklist();
     } else {
       this.updateApiObject(this.selectedAlertlistItem);
@@ -184,47 +209,40 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
     }
   }
 
-  async updateRecord(apiObject:any) {
-    await this.sviWindow.sas.vi.http.get(`/svi-datahub/documents/${this.internalEntityObjectTypeName}/${this.internalEntityID}`).then(async (getResult) =>{
-        if(getResult.status == 200){
-            console.log("Document Got Successfully",getResult);
-            const parsed = typeof getResult.body === 'string' ? JSON.parse(getResult.body) : getResult.body;
-            console.log("parsed get response",parsed);
-            parsed.fieldValues.selected_checklist_code = apiObject.fieldValues.selected_checklist_code;
-            parsed.fieldValues.selected_checklist_label = apiObject.fieldValues.selected_checklist_label;
-            console.log("Updated checklist code",parsed.fieldValues.selected_checklist_code);
-            console.log("Updated checklist label",parsed.fieldValues.selected_checklist_label);
-            await this.sviWindow.sas.vi.http.post(`/svi-datahub/locks/documents?type=${this.internalEntityObjectTypeName}&id=${this.internalEntityID}`,null).then(async (lockResult) => {
-                if(lockResult.status == 201){
-                    console.log("Document Locked Successfully");
-                    await this.sviWindow.sas.vi.http.put(`/svi-datahub/documents/${this.internalEntityObjectTypeName}/${this.internalEntityID}`,parsed).then(async (result) => {
-                        if(result.status == 200){
-                            await this.sviWindow.sas.vi.http.delete(`/svi-datahub/locks/documents?type=${this.internalEntityObjectTypeName}&id=${this.internalEntityID}`).then(async (unlockResult) => {
-                              console.log("Record Updated Successfully...");
-                              alert("Alert Version Updated Successfully!");
-                              this.controlApi.page.cancelEdit(false);
-                            });
-                          }
-                        });
-                      }
-                    });
-                  }
-                });
+  async updateRecord(apiObject: any) {
+    await this.sviWindow.sas.vi.http.get(`/svi-datahub/documents/${this.internalEntityObjectTypeName}/${this.internalEntityID}`).then(async (getResult) => {
+      if (getResult.status == 200) {
+        const parsed = typeof getResult.body === 'string' ? JSON.parse(getResult.body) : getResult.body;
+        parsed.fieldValues.selected_checklist_code = apiObject.fieldValues.selected_checklist_code;
+        parsed.fieldValues.selected_checklist_label = apiObject.fieldValues.selected_checklist_label;
 
+        await this.sviWindow.sas.vi.http.post(`/svi-datahub/locks/documents?type=${this.internalEntityObjectTypeName}&id=${this.internalEntityID}`, null).then(async (lockResult) => {
+          if (lockResult.status == 201) {
+            await this.sviWindow.sas.vi.http.put(`/svi-datahub/documents/${this.internalEntityObjectTypeName}/${this.internalEntityID}`, parsed).then(async (result) => {
+              if (result.status == 200) {
+                await this.sviWindow.sas.vi.http.delete(`/svi-datahub/locks/documents?type=${this.internalEntityObjectTypeName}&id=${this.internalEntityID}`).then(async () => {
+                  alert("Alert Version Updated Successfully!");
+                  this.controlApi.page.cancelEdit(false);
+                });
+              }
+            });
+          }
+        });
+      }
+    });
   }
 
-  get isViewMode(): boolean {
-    return this.pageModel?.mode === 'view';
+  toggleMode(): void {
+    if (!this.pageModel) return;
+
+    // Set view mode only when type is NOT 'alerts' AND mode is 'view'
+    this.isViewMode = this.pageModel.type !== 'alerts' && this.pageModel.mode === 'view';
   }
 
   startModeWatcher(): void {
     this.modeWatcherInterval = setInterval(() => {
       if (!this.pageModel) return;
-      const currentMode = this.pageModel.mode;
-      if (currentMode !== this.previousMode) {
-        this.previousMode = currentMode;
-        this.cdr.detectChanges();
-      }
+      this.toggleMode();
     }, 300);
   }
 
