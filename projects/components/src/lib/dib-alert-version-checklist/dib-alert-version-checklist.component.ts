@@ -101,15 +101,15 @@ export class DibAlertVersionChecklistComponent implements OnInit, OnDestroy {
   }
 
   async getAlertVersionDetails() {
-    // const result = await this.sviWindow.sas.vi.http.get(`/SASJobExecution/?_program=${this.alertVersionJobPath}x&_action=execute&id=${this.actionableEntityId}`);
-    // const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
-    // console.log("Api Result", parsed.seachresult);
-    // this.alertVersionsArr = parsed.seachresult;
-    // const formattedData = this.alertVersionsArr.map(item => ({
-    //   ...item,
-    //   alert_version_nbr_dttm: this.formatDate(item.alert_version_nbr_dttm)
-    // }));
-    // this.alertVersionsArr = formattedData;
+    const result = await this.sviWindow.sas.vi.http.get(`/SASJobExecution/?_program=${this.alertVersionJobPath}&_action=execute&id=${this.actionableEntityId}`);
+    const parsed = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+    console.log("Api Result", parsed.seachresult);
+    this.alertVersionsArr = parsed.seachresult;
+    const formattedData = this.alertVersionsArr.map(item => ({
+      ...item,
+      alert_version_nbr_dttm: this.formatDate(item.alert_version_nbr_dttm)
+    }));
+    this.alertVersionsArr = formattedData;
   }
 
   formatDate(dateString: string): string {
